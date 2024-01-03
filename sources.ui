@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>811</width>
+    <width>1147</width>
     <height>336</height>
    </rect>
   </property>
@@ -840,6 +840,43 @@ Not implemented yet in GoldenDict.</string>
         </spacer>
        </item>
       </layout>
+     </widget>
+     <widget class="QWidget" name="eudicTab">
+      <attribute name="title">
+       <string>Eudic</string>
+      </attribute>
+      <widget class="QWidget" name="gridLayoutWidget">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>10</y>
+         <width>1111</width>
+         <height>271</height>
+        </rect>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_3">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_17">
+          <property name="text">
+           <string>Key</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="eudicKey"/>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="eudicStudyListId"/>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_18">
+          <property name="text">
+           <string>StudyListId</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </widget>
    </item>

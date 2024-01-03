@@ -566,6 +566,20 @@ struct Forvo
   { return ! operator == ( other ); }
 };
 
+struct Eudic {
+  QString eudicKey;
+  QString eudicStudyListId;
+
+  Eudic() {};
+
+  bool operator==(Eudic const &other) const {
+    return eudicKey == other.eudicKey &&
+           eudicStudyListId == other.eudicStudyListId;
+  }
+
+  bool operator!=(Eudic const &other) const { return !operator==(other); }
+};
+
 struct Program
 {
   bool enabled;
@@ -667,6 +681,7 @@ struct Class
   Hunspell hunspell;
   Transliteration transliteration;
   Forvo forvo;
+  Eudic eudic;
   Programs programs;
   VoiceEngines voiceEngines;
 

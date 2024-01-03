@@ -281,6 +281,8 @@ public:
 
   Config::Forvo getForvo() const;
 
+  Config::Eudic getEudic() const;
+
 signals:
 
   /// Emitted when a 'Rescan' button is clicked.

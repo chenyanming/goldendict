@@ -5,25 +5,35 @@
 #include "epwing_book.hh"
 #endif
 
-#include "mainwindow.hh"
-#include "editdictionaries.hh"
-#include "loaddictionaries.hh"
-#include "preferences.hh"
 #include "about.hh"
-#include "mruqmenu.hh"
-#include "gestures.hh"
 #include "dictheadwords.hh"
-#include <limits.h>
+#include "editdictionaries.hh"
+#include "gestures.hh"
+#include "loaddictionaries.hh"
+#include "mainwindow.hh"
+#include "mruqmenu.hh"
+#include "preferences.hh"
+#include <QCloseEvent>
+#include <QCryptographicHash>
 #include <QDebug>
-#include <QTextStream>
+#include <QDesktopServices>
 #include <QDir>
-#include <QUrl>
-#include <QMessageBox>
+#include <QFileDialog>
 #include <QIcon>
 #include <QList>
+#include <QMessageBox>
+#include <QPageSetupDialog>
+#include <QPrintDialog>
+#include <QPrintPreviewDialog>
+#include <QPrinter>
+#include <QProcess>
+#include <QRunnable>
+#include <QSslConfiguration>
+#include <QTextStream>
+#include <QThreadPool>
 #include <QToolBar>
-#include <QCloseEvent>
-#include <QDesktopServices>
+#include <QUrl>
+#include <limits.h>
 #include <QProcess>
 #include <QCryptographicHash>
 #include <QFileDialog>
@@ -4269,6 +4279,147 @@ void MainWindow::on_exportFavorites_triggered()
   mainStatusBar->showMessage( errStr, 10000, QPixmap( ":/icons/error.png" ) );
 }
 
+void MainWindow::on_SyncFavorites_triggered() {
+  for (;;) {
+    // Assuming 'this' inherits from QObject and it is safe to pass 'this' to QNetworkAccessManager
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    connect(manager, &QNetworkAccessManager::finished, this, [this, manager](QNetworkReply *reply) {
+        if (reply->error()) {
+            qDebug() << reply->errorString();
+        } else {
+            QString answer = reply->readAll();
+            QJsonDocument jsonResponse = QJsonDocument::fromJson(answer.toUtf8());
+            QJsonObject jsonObject = jsonResponse.object();
+            QJsonArray jsonArray = jsonObject["data"].toArray();
+
+            // Iterate over the jsonArray in reverse
+            for (int i = jsonArray.size() - 1; i >= 0; --i) {
+                QJsonObject obj = jsonArray[i].toObject();
+                QString word = obj["word"].toString();
+                qDebug() << "Word: " << word;
+                qDebug() << "Explanation: " << obj["exp"].toString();
+                // Now call the member function for each word in reverse order
+                this->addWordToFavorites(word, 0);
+            }
+        }
+        reply->deleteLater();
+        // Be cautious with deleteLater if manager is intended to be reused.
+    });
+
+    QUrl url("https://api.frdic.com/api/open/v1/studylist/words/" + cfg.eudic.eudicStudyListId + "?language=en&category_id=0");
+    // QUrl url("https://api.frdic.com/api/open/v1/studylist/words/0?language=en&category_id=0&page=1&page_size=100");
+    QNetworkRequest request(url);
+    // Adding Authorization header
+    request.setRawHeader("Authorization", cfg.eudic.eudicKey.toUtf8());
+    manager->get(request);
+
+    // Write Favorites
+    QString data;
+    ui.favoritesPaneWidget->getDataInPlainText(data);
+    // qDebug() << data;
+
+    mainStatusBar->showMessage(tr("Sync favorites export complete"), 5000);
+    return;
+  }
+  QString errStr = QString(tr("Sync error "));
+  mainStatusBar->showMessage(errStr, 10000, QPixmap(":/icons/error.png"));
+}
+
+void MainWindow::addWordsToStudyList(const QString &studyListId, const QString &language, const QStringList &words) {
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this); // Consider reusing an existing instance
+    QJsonObject jsonBody;
+    jsonBody["id"] = studyListId;
+    jsonBody["language"] = language;
+    QJsonArray wordsArray;
+
+    for (const QString &word : words) {
+        wordsArray.append(word);
+    }
+
+    jsonBody["words"] = wordsArray;
+    QJsonDocument jsonDoc(jsonBody);
+    QByteArray jsonData = jsonDoc.toJson();
+
+    // Setup the request
+    QUrl url("https://api.frdic.com/api/open/v1/studylist/words");
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Authorization", cfg.eudic.eudicKey.toUtf8());
+    qDebug() << jsonData;
+
+    // Make the network request
+    QNetworkReply* reply = manager->post(request, jsonData);
+
+    // Connect the finished signal to a lambda to process the response
+    connect(reply, &QNetworkReply::finished, this, [reply, this]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            QByteArray response = reply->readAll();
+            qDebug() << "Response:" << response;
+            // Process the response, handle success
+
+            QString okStr = QString(tr("Add word ok: ")) + response;
+            mainStatusBar->showMessage(okStr, 5000);
+
+        } else {
+          QByteArray response =
+              reply->readAll(); // Read the error response body
+          qDebug() << "Error:" << reply->errorString();
+          qDebug()
+              << "Response Body:"
+              << response; // This may contain details about the bad request
+
+          QString errStr = QString(tr("Sync error ")) + response;
+          mainStatusBar->showMessage(errStr, 10000,
+                                     QPixmap(":/icons/error.png"));
+          // Handle error
+        }
+        reply->deleteLater(); // Cleanup
+    });
+}
+
+void MainWindow::deleteWordsFromStudyList(const QString &studyListId, const QString &language, const QStringList &words) {
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+
+    // Create the JSON object with the request data
+    QJsonObject jsonBody;
+    jsonBody["id"] = studyListId;
+    jsonBody["language"] = language;
+    QJsonArray wordsArray;
+    for (const QString &word : words) {
+        wordsArray.append(word);
+    }
+    jsonBody["words"] = wordsArray;
+    QJsonDocument jsonDoc(jsonBody);
+    QByteArray jsonData = jsonDoc.toJson();
+
+    // Set up the request
+    QUrl url("https://api.frdic.com/api/open/v1/studylist/words");
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Authorization", cfg.eudic.eudicKey.toUtf8());
+
+    // Send the DELETE request
+    QNetworkReply* reply = manager->sendCustomRequest(request, "DELETE", jsonData);
+
+    // Connect to the finished signal to process the response
+    connect(reply, &QNetworkReply::finished, this, [reply, this]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            qDebug() << "Success! Words deleted.";
+            QString okStr = QString(tr("Success! Words deleted."));
+            mainStatusBar->showMessage(okStr, 5000);
+        } else {
+            qDebug() << "Error:" << reply->errorString();
+            QByteArray response = reply->readAll();
+            qDebug() << "Server response:" << response;
+
+            QString errStr = QString(tr("Sync error ")) + response;
+            mainStatusBar->showMessage(errStr, 10000,
+                                       QPixmap(":/icons/error.png"));
+        }
+        reply->deleteLater();
+    });
+}
+
 void MainWindow::on_ExportFavoritesToList_triggered()
 {
   QString exportPath;
@@ -4915,6 +5066,11 @@ void MainWindow::handleAddToFavoritesButton()
       if( ui.favoritesPaneWidget->removeHeadword( folder, headword ) )
       {
         addToFavorites->setIcon( starIcon );
+
+        QStringList wordsToDelete;
+        wordsToDelete << headword; // Replace with words you want to delete
+        this->deleteWordsFromStudyList(cfg.eudic.eudicStudyListId, "en", wordsToDelete);
+
         addToFavorites->setToolTip( tr( "Add current tab to Favorites" ) );
       }
     }
@@ -4923,6 +5079,10 @@ void MainWindow::handleAddToFavoritesButton()
   {
     ui.favoritesPaneWidget->addHeadword( folder, headword );
     addToFavorites->setIcon( blueStarIcon );
+    qDebug() << headword;
+    QStringList words;
+    words << headword; // Add all words you want to insert
+    this->addWordsToStudyList(cfg.eudic.eudicStudyListId, "en", words);
     addToFavorites->setToolTip( tr( "Remove current tab from Favorites" ) );
   }
 }

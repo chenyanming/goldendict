@@ -134,7 +134,7 @@ void EditDictionaries::on_tabs_currentChanged( int index )
       if ( question.clickedButton() == accept )
       {
         acceptChangedSources( true );
-        
+
         lastCurrentTab = index;
         ui.tabs->setCurrentIndex( index );
       }
@@ -179,6 +179,7 @@ bool EditDictionaries::isSourcesChanged() const
          sources.getHunspell() != cfg.hunspell ||
          sources.getTransliteration() != cfg.transliteration ||
          sources.getForvo() != cfg.forvo ||
+         sources.getEudic() != cfg.eudic ||
          sources.getMediaWikis() != cfg.mediawikis ||
          sources.getWebSites() != cfg.webSites ||
          sources.getDictServers() != cfg.dictServers ||
@@ -199,6 +200,7 @@ void EditDictionaries::acceptChangedSources( bool rebuildGroups )
   cfg.hunspell = sources.getHunspell();
   cfg.transliteration = sources.getTransliteration();
   cfg.forvo = sources.getForvo();
+  cfg.eudic = sources.getEudic();
   cfg.mediawikis = sources.getMediaWikis();
   cfg.webSites = sources.getWebSites();
   cfg.dictServers = sources.getDictServers();

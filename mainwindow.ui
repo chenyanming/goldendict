@@ -70,7 +70,7 @@
      <x>0</x>
      <y>0</y>
      <width>653</width>
-     <height>18</height>
+     <height>32</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -146,6 +146,7 @@
     <addaction name="exportFavorites"/>
     <addaction name="ExportFavoritesToList"/>
     <addaction name="importFavorites"/>
+    <addaction name="SyncFavorites"/>
     <addaction name="separator"/>
     <addaction name="actionAddToFavorites"/>
    </widget>
@@ -665,6 +666,11 @@
   <action name="ExportFavoritesToList">
    <property name="text">
     <string>Export to list</string>
+   </property>
+  </action>
+  <action name="SyncFavorites">
+   <property name="text">
+    <string>Sync</string>
    </property>
   </action>
  </widget>

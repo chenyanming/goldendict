@@ -4306,6 +4306,9 @@ void MainWindow::on_SyncFavorites_triggered() {
         // Be cautious with deleteLater if manager is intended to be reused.
     });
 
+    // delete all items before sync
+    ui.favoritesPaneWidget->deleteAllItems();
+
     QString studyListId =
         cfg.eudic.eudicStudyListId; // This should be the actual variable from
                                     // your configuration

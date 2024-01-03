@@ -706,6 +706,14 @@ Class load() THROW_SPEC( exError )
   else
     c.forvo.languageCodes = "en, ru"; // Default demo values
 
+  QDomNode eudic = root.namedItem("eudic");
+
+  if (!eudic.isNull()) {
+    c.eudic.eudicKey = eudic.namedItem("eudicKey").toElement().text();
+    c.eudic.eudicStudyListId =
+        eudic.namedItem("eudicStudyListId").toElement().text();
+  }
+
   QDomNode programs = root.namedItem( "programs" );
 
   if ( !programs.isNull() )
@@ -1492,6 +1500,21 @@ void save( Class const & c ) THROW_SPEC( exError )
     opt = dd.createElement( "languageCodes" );
     opt.appendChild( dd.createTextNode( c.forvo.languageCodes ) );
     forvo.appendChild( opt );
+  }
+
+  {
+    // Eudic
+
+    QDomElement eudic = dd.createElement("eudic");
+    root.appendChild(eudic);
+
+    QDomElement opt = dd.createElement("eudicKey");
+    opt.appendChild(dd.createTextNode(c.eudic.eudicKey));
+    eudic.appendChild(opt);
+
+    opt = dd.createElement("eudicStudyListId");
+    opt.appendChild(dd.createTextNode(c.eudic.eudicStudyListId));
+    eudic.appendChild(opt);
   }
 
   {

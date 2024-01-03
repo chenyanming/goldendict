@@ -472,6 +472,9 @@ private slots:
 
   void on_exportFavorites_triggered();
   void on_importFavorites_triggered();
+  void on_SyncFavorites_triggered();
+  void addWordsToStudyList(const QString &studyListId, const QString &language, const QStringList &words);
+  void deleteWordsFromStudyList(const QString &studyListId, const QString &language, const QStringList &words);
   void on_ExportFavoritesToList_triggered();
 
   void updateSearchPaneAndBar( bool searchInDock );

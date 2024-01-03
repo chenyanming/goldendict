@@ -35,6 +35,7 @@ Sources::Sources( QWidget * parent, Config::Class const & cfg):
   Config::Hunspell const & hunspell = cfg.hunspell;
   Config::Transliteration const & trs = cfg.transliteration;
   Config::Forvo const & forvo = cfg.forvo;
+  Config::Eudic const & eudic = cfg.eudic;
 
   // TODO: will programTypeEditorCreator and itemEditorFactory be destroyed by
   // anyone?
@@ -121,6 +122,11 @@ Sources::Sources( QWidget * parent, Config::Class const & cfg):
   ui.forvoEnabled->setChecked( forvo.enable );
   ui.forvoApiKey->setText( forvo.apiKey );
   ui.forvoLanguageCodes->setText( forvo.languageCodes );
+
+  qDebug() << eudic.eudicKey;
+  qDebug() << eudic.eudicStudyListId;
+  ui.eudicKey->setText(eudic.eudicKey);
+  ui.eudicStudyListId->setText(eudic.eudicStudyListId);
 
   // Text to speech
 #if defined( Q_OS_WIN32 ) || defined( Q_OS_MAC )
@@ -391,6 +397,15 @@ Config::Forvo Sources::getForvo() const
   forvo.languageCodes = ui.forvoLanguageCodes->text();
 
   return forvo;
+}
+
+Config::Eudic Sources::getEudic() const {
+  Config::Eudic eudic;
+
+  eudic.eudicKey = ui.eudicKey->text();
+  eudic.eudicStudyListId = ui.eudicStudyListId->text();
+
+  return eudic;
 }
 
 ////////// MediaWikisModel

@@ -335,6 +335,7 @@ private slots:
 
   void on_addProgram_clicked();
   void on_removeProgram_clicked();
+  void on_eudicStudyListButton_clicked();
 
   void on_rescan_clicked();
 };

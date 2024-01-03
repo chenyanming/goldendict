@@ -2,10 +2,21 @@
  * Part of GoldenDict. Licensed under GPLv3 or later, see the LICENSE file */
 
 #include "sources.hh"
-#include <QFileDialog>
-#include <QMessageBox>
-#include <QStandardItemModel>
 #include "gddebug.hh"
+#include <QByteArray>
+#include <QDebug>
+#include <QFileDialog>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QMessageBox>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QStandardItemModel>
+#include <QStringList>
+#include <QUrl>
+#include <QUrlQuery>
 
 #ifdef MAKE_CHINESE_CONVERSION_SUPPORT
 #include "chineseconversion.hh"
@@ -344,6 +355,57 @@ void Sources::on_removeProgram_clicked()
                               QMessageBox::Ok,
                               QMessageBox::Cancel ) == QMessageBox::Ok )
     programsModel.removeProgram( current.row() );
+}
+
+void Sources::on_eudicStudyListButton_clicked() {
+  QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+  const QString &language = "en";
+
+  // Set up the request URL with query parameters
+  QUrl url("https://api.frdic.com/api/open/v1/studylist/category");
+  QUrlQuery query;
+  query.addQueryItem("language", language);
+  url.setQuery(query);
+
+  QNetworkRequest request(url);
+  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+  request.setRawHeader(
+      "Authorization",
+      ui.eudicKey->text().toUtf8()); // Replace with your actual token
+
+  // Send the GET request
+  QNetworkReply *reply = manager->get(request);
+
+  // Connect to the finished signal to process the response
+  connect(reply, &QNetworkReply::finished, this, [reply, this]() {
+    if (reply->error() == QNetworkReply::NoError) {
+      QByteArray response = reply->readAll();
+      qDebug() << "Response:" << QString::fromUtf8(response);
+
+      // simply show the result for user to copy and paste
+      QJsonDocument jsonDocument = QJsonDocument::fromJson(response);
+      QString prettyJsonString = jsonDocument.toJson(QJsonDocument::Indented);
+      ui.eudicStudyListTextEdit->setText(prettyJsonString);
+
+      // Process the response, handle success (parse the JSON, etc.)
+      QJsonDocument jsonResponse = QJsonDocument::fromJson(response);
+      QJsonObject jsonObject = jsonResponse.object();
+      QJsonArray dataArray = jsonObject["data"].toArray();
+
+      foreach (const QJsonValue &value, dataArray) {
+        QJsonObject obj = value.toObject();
+        QString id = obj["id"].toString();
+        QString language = obj["language"].toString();
+        QString name = obj["name"].toString();
+        // ... Do something with this information
+      }
+    } else {
+      qDebug() << "Error:" << reply->errorString();
+      QByteArray response = reply->readAll();
+      qDebug() << "Error Response:" << QString::fromUtf8(response);
+    }
+    reply->deleteLater();
+  });
 }
 
 Config::VoiceEngines Sources::getVoiceEngines() const

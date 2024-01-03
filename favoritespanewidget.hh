@@ -57,6 +57,7 @@ public:
   bool isHeadwordPresent( QString const & path, QString const & headword );
 
   void saveData();
+  void deleteAllItems();
 
 signals:
   void favoritesItemRequested( QString const & word, QString const & faforitesFolder );

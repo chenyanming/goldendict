@@ -204,6 +204,32 @@ void FavoritesPaneWidget::deleteSelectedItems()
   m_favoritesModel->removeItemsForIndexes( selectedIdxs );
 }
 
+void FavoritesPaneWidget::deleteAllItems() {
+  // Get the number of rows in the model
+  int rowCount = m_favoritesTree->model()->rowCount();
+
+  if (rowCount == 0) {
+    // nothing to do
+    return;
+  }
+
+  // if (m_cfg->preferences.confirmFavoritesDeletion) {
+  //   QMessageBox mb(QMessageBox::Warning, "GoldenDict",
+  //                  tr("All items will be deleted. Continue?"),
+  //                  QMessageBox::Yes | QMessageBox::No);
+  //   mb.exec();
+  //   if (mb.result() != QMessageBox::Yes)
+  //     return;
+  // }
+
+  // Remove from the end to avoid index shifting problems
+  for (int row = rowCount - 1; row >= 0; --row) {
+    QModelIndex idx = m_favoritesTree->model()->index(
+        row, 0); // Assuming column 0 is the one to remove
+    m_favoritesModel->removeRows(idx.row(), 1, idx.parent());
+  }
+}
+
 void FavoritesPaneWidget::showCustomMenu(QPoint const & pos)
 {
   QModelIndexList selectedIdxs = m_favoritesTree->selectionModel()->selectedIndexes();

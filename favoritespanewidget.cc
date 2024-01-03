@@ -114,6 +114,8 @@ void FavoritesPaneWidget::setUp( Config::Class * cfg, QMenu * menu )
   m_favoritesTree->installEventFilter( this );
   m_favoritesTree->viewport()->installEventFilter( this );
 
+  updateFavoriteCounts();
+
   // list selection and keyboard navigation
   connect( m_favoritesTree, SIGNAL( clicked( QModelIndex const & ) ),
            this, SLOT( onItemClicked( QModelIndex const & ) ) );
@@ -123,12 +125,38 @@ void FavoritesPaneWidget::setUp( Config::Class * cfg, QMenu * menu )
 
   connect( m_favoritesTree, SIGNAL( customContextMenuRequested( QPoint const & ) ),
            this, SLOT( showCustomMenu( QPoint const & ) ) );
+
+  connect(m_favoritesTree->model(), &QAbstractItemModel::dataChanged, this,
+          &FavoritesPaneWidget::updateFavoriteCounts);
+  connect(m_favoritesTree->model(), &QAbstractItemModel::rowsInserted, this,
+          &FavoritesPaneWidget::updateFavoriteCounts);
+  connect(m_favoritesTree->model(), &QAbstractItemModel::rowsRemoved, this,
+          &FavoritesPaneWidget::updateFavoriteCounts);
+  connect(m_favoritesTree->model(), &QAbstractItemModel::modelReset, this,
+          &FavoritesPaneWidget::updateFavoriteCounts);
 }
 
 FavoritesPaneWidget::~FavoritesPaneWidget()
 {
   if( listItemDelegate )
     delete listItemDelegate;
+}
+
+int countItems(const QAbstractItemModel *model, const QModelIndex &parent = QModelIndex()) {
+  int count = 0;
+  for (int row = 0; row < model->rowCount(parent); ++row) {
+    count++; // Count the item itself
+    QModelIndex index = model->index(row, 0, parent);
+    // Recursively count the children
+    count += countItems(model, index);
+  }
+  return count;
+}
+
+void FavoritesPaneWidget::updateFavoriteCounts() {
+  QAbstractItemModel *model = m_favoritesTree->model();
+  int itemCount = countItems(model);
+  favoritesLabel.setText(tr("Favorite: %1").arg(itemCount));
 }
 
 bool FavoritesPaneWidget::eventFilter( QObject * obj, QEvent * ev )

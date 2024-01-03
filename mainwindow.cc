@@ -4296,8 +4296,8 @@ void MainWindow::on_SyncFavorites_triggered() {
             for (int i = jsonArray.size() - 1; i >= 0; --i) {
                 QJsonObject obj = jsonArray[i].toObject();
                 QString word = obj["word"].toString();
-                qDebug() << "Word: " << word;
-                qDebug() << "Explanation: " << obj["exp"].toString();
+                // qDebug() << "Word: " << word;
+                // qDebug() << "Explanation: " << obj["exp"].toString();
                 // Now call the member function for each word in reverse order
                 this->addWordToFavorites(word, 0);
             }
@@ -4306,8 +4306,15 @@ void MainWindow::on_SyncFavorites_triggered() {
         // Be cautious with deleteLater if manager is intended to be reused.
     });
 
-    QUrl url("https://api.frdic.com/api/open/v1/studylist/words/" + cfg.eudic.eudicStudyListId + "?language=en&category_id=0");
-    // QUrl url("https://api.frdic.com/api/open/v1/studylist/words/0?language=en&category_id=0&page=1&page_size=100");
+    QString studyListId =
+        cfg.eudic.eudicStudyListId; // This should be the actual variable from
+                                    // your configuration
+    QUrl url(QStringLiteral("https://api.frdic.com/api/open/v1/studylist/words/"
+                            "%1?language=en&category_id=%2")
+                 .arg(0)
+                 .arg(studyListId));
+    qDebug() << url;
+
     QNetworkRequest request(url);
     // Adding Authorization header
     request.setRawHeader("Authorization", cfg.eudic.eudicKey.toUtf8());

@@ -64,6 +64,9 @@ signals:
 protected:
   virtual void timerEvent( QTimerEvent * ev );
 
+public slots:
+  void updateFavoriteCounts();
+
 private slots:
   void emitFavoritesItemRequested(QModelIndex const &);
   void onSelectionChanged(QItemSelection const & selection);
